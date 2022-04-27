@@ -1,1 +1,56 @@
-// TODO
+.post {
+  display: block;
+  margin-bottom: 3rem;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.01);
+
+    strong {
+      color: var(--pink);
+    }
+  }
+
+  strong {
+    display: block;
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+    transition: color 0.2s;
+  }
+
+  p {
+    color: var(--very-light-gray);
+    margin-bottom: 1.25rem;
+  }
+
+  .time,
+  .user {
+    display: inline-block;
+  }
+
+  .user {
+    margin-left: 2rem;
+  }
+
+  time,
+  span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--light-gray);
+  }
+}
+
+.loadPosts {
+  font-size: 1rem;
+  border: none;
+  background: transparent;
+  color: var(--pink);
+  transition: filter 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(0.9);
+    text-decoration: underline;
+  }
+}
