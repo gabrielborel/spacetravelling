@@ -1,14 +1,12 @@
-/* eslint-disable no-shadow */
+import { useState } from 'react';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
-import { motion } from 'framer-motion/dist/framer-motion';
+import { motion } from 'framer-motion';
 import { GoCalendar } from 'react-icons/go';
 import { RiUser3Line } from 'react-icons/ri';
-import { RichText } from 'prismic-dom';
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
-import { useState } from 'react';
 import { getPrismicClient } from '../services/prismic';
 import styles from './home.module.scss';
 import commonStyles from '../styles/common.module.scss';
@@ -61,8 +59,10 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
   const [nextPage, setNextPage] = useState(postsPagination.next_page);
 
   const loadMorePosts = async (): Promise<void> => {
-    const response = await fetch(nextPage).then(response => response.json());
-    const { results, next_page: fetchedNextPage } = response;
+    const responseFetch = await fetch(nextPage).then(response =>
+      response.json()
+    );
+    const { results, next_page: fetchedNextPage } = responseFetch;
 
     const fetchedPosts = results.map((post: Post) => {
       return {
