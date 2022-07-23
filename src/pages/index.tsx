@@ -52,6 +52,10 @@ const itemVariants = {
     y: 0,
     opacity: 1,
   },
+  exit: {
+    y: 20,
+    opacity: 0,
+  },
 };
 
 export default function Home({ postsPagination }: HomeProps): JSX.Element {
@@ -92,6 +96,7 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
         variants={mainVariants}
         initial="hidden"
         animate="visible"
+        exit="exit"
         className={commonStyles.container}
       >
         {posts.map(
@@ -101,8 +106,12 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
             data: { author, subtitle, title },
           }) => {
             return (
-              <Link href={`/post/${uid}`} key={uid}>
-                <motion.a variants={itemVariants} className={styles.post}>
+              <Link href={`/post/${uid}`} key={uid} passHref>
+                <motion.a
+                  variants={itemVariants}
+                  className={styles.post}
+                  whileHover={{ scale: 1.01 }}
+                >
                   <strong>{title}</strong>
                   <p>{subtitle}</p>
                   <div className={styles.time}>
