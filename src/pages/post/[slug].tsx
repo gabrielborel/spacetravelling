@@ -1,9 +1,10 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable react/no-danger */
 /* eslint-disable dot-notation */
+import { useEffect } from 'react';
 import ptBR from 'date-fns/locale/pt-BR';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import Head from 'next/head';
-import { RichText } from 'prismic-reactjs';
 import { RichText as Rich } from 'prismic-dom';
 import { format } from 'date-fns';
 import { GoCalendar } from 'react-icons/go';
@@ -26,6 +27,10 @@ const variants = {
     y: 0,
     opacity: 1,
   },
+  exit: {
+    y: 20,
+    opacity: 0,
+  },
 };
 
 interface Post {
@@ -47,17 +52,34 @@ interface Post {
 
 interface PostProps {
   post: Post;
+  nextPage: string;
 }
 
-export default function Post({ post }: PostProps): JSX.Element {
+export default function Post({ post, nextPage }: PostProps): JSX.Element {
   const router = useRouter();
-  const bodyContentWords = RichText.asText(post.data.content['body']).split(
-    ' '
-  ).length;
+
+  useEffect(() => {
+    const nextPageData = async (): Promise<void> => {
+      const data = await fetch(nextPage).then(response => response.json());
+
+      console.log(data);
+    };
+
+    nextPageData();
+  }, [nextPage]);
 
   if (router.isFallback) {
-    return <div>Carregando ...</div>;
+    return <div>Carregando...</div>;
   }
+
+  const readingTime = post.data.content.reduce((acc, content) => {
+    const headingWords = content.heading.split(' ');
+    const bodyWords = Rich.asText(content.body).split(' ');
+    acc += headingWords.length;
+    acc += bodyWords.length;
+
+    return acc;
+  }, 0);
 
   return (
     <>
@@ -77,11 +99,11 @@ export default function Post({ post }: PostProps): JSX.Element {
         variants={variants}
         initial="hidden"
         animate="visible"
+        exit="exit"
         transition={{ duration: 0.4 }}
         className={`${commonStyles.container} ${styles.post}`}
       >
         <strong>{post.data.title}</strong>
-
         <div className={styles.info}>
           <time className={styles.date}>
             <GoCalendar />
@@ -95,20 +117,22 @@ export default function Post({ post }: PostProps): JSX.Element {
           </div>
           <div className={styles.readTime}>
             <FiClock />
-            {Math.ceil(bodyContentWords / 200)} min
+            {Math.ceil(readingTime / 200)} min
           </div>
         </div>
-
         <strong className={styles.contentHeading}>
           {post.data.content['heading']}
         </strong>
-
-        <div
-          className={styles.postContent}
-          dangerouslySetInnerHTML={{
-            __html: Rich.asHtml(post.data.content['body']),
-          }}
-        />
+        <div className={styles.postContent}>
+          {post.data.content.map(content => (
+            <section key={content.heading}>
+              <h2>{content.heading}</h2>
+              {content.body.map(body => (
+                <p key={body.text}>{body.text}</p>
+              ))}
+            </section>
+          ))}
+        </div>
       </motion.main>
     </>
   );
@@ -120,14 +144,14 @@ export const getStaticPaths: GetStaticPaths = async () => {
     fetch: ['publication.title', 'publication.content'],
   });
 
-  const paths = posts.results.map(post => ({
+  const params = posts.results.map(post => ({
     params: {
       slug: post.uid,
     },
   }));
 
   return {
-    paths,
+    paths: params,
     fallback: true,
   };
 };
@@ -138,7 +162,23 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
 
   const response = await prismic.getByUID('post', String(slug), {});
 
+  const contents = response.data.content.map(content => {
+    const contentObj = {};
+    let bodies = [];
+    Object.assign(contentObj, { heading: content.heading });
+
+    bodies = content.body.map(item => {
+      return {
+        ...item,
+      };
+    });
+
+    Object.assign(contentObj, { body: bodies });
+    return contentObj;
+  });
+
   const post = {
+    uid: response.uid,
     first_publication_date: response.first_publication_date,
     data: {
       title: response.data.title,
@@ -146,10 +186,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         url: response.data.banner.url,
       },
       author: response.data.author,
-      content: {
-        heading: response.data.content[0].heading,
-        body: response.data.content[0].body,
-      },
+      content: contents,
     },
   };
 
